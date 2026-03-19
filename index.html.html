@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RBS Global - Advance Admin Panel</title>
+    <style>
+        :root { --primary: #1a237e; --secondary: #283593; --success: #2e7d32; --warning: #d32f2f; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 40px; }
+        
+        /* Login Screen */
+        #loginOverlay { position: fixed; inset: 0; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; color: white; }
+        .login-card { background: white; padding: 30px; border-radius: 10px; color: #333; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 300px; }
+        .login-card input { margin-bottom: 15px; padding: 12px; width: 100%; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+
+        .main-app { display: none; width: 95%; max-width: 850px; margin: 20px 0; }
+        
+        /* Search Box */
+        .search-section { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .search-section input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .btn-search { background: var(--secondary); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); position: relative; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 20px; }
+        .logo { width: 85px; height: auto; }
+        .school-info { text-align: right; }
+        .school-info h2 { margin: 0; color: var(--primary); font-size: 24px; }
+        .school-info p { margin: 2px 0; font-size: 12px; color: #444; font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px; border: 1px solid #eee; }
+        th { background: #f8f9fa; text-align: left; width: 30%; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 15px; }
+        
+        .btn-group { margin-top: 25px; display: flex; gap: 15px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-save { background: var(--success); }
+        .btn-print { background: #0277bd; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Dashboard at Bottom */
+        .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; }
+        .stat-card { background: white; padding: 12px; border-radius: 8px; border-bottom: 4px solid var(--primary); text-align: center; border: 1px solid #eee; }
+        .stat-card h4 { margin: 0; color: #666; font-size: 10px; text-transform: uppercase; }
+        .stat-card p { margin: 5px 0 0; font-size: 17px; font-weight: bold; color: var(--primary); }
+
+        @media print {
+            #loginOverlay, .dashboard, .btn-group, .search-section, .btn-search, center { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: 1px solid #000; padding: 15px; }
+            input { border: none !important; background: transparent !important; padding: 4px 0 !important; }
+        }
+    </style>
+</head>
+<body onload="checkAutoLogin()">
+
+<div id="loginOverlay">
+    <h1 style="margin-bottom: 20px; letter-spacing: 2px;">RBS GLOBAL PUBLIC SCHOOL</h1>
+    <div class="login-card">
+        <h3 style="margin-top: 0;">Admin Access</h3>
+        <input type="password" id="passInput" placeholder="Password">
+        <button class="btn btn-save" style="width: 100%;" onclick="checkLogin()">Login</button>
+    </div>
+</div>
+
+<div class="main-app" id="app">
+    
+    <div class="search-section">
+        <input type="text" id="searchInput" placeholder="Search by Student Name or Receipt No...">
+        <button class="btn-search" id="searchBtn" onclick="performSearch()">🔍 Search</button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="Logo" class="logo">
+            <div class="school-info">
+                <h2>RBS Global Public School</h2>
+                <p>Sohramau, Rasoolpur, Unnao (U.P.)</p>
+                <p>Gamil:- rbsglobalpublicschool9@gmail.com, Phone:- 9935858772</p>
+            </div>
+        </div>
+
+        <form id="bookForm">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold;">
+                <span>Receipt: <span id="receiptNoDisplay" style="color:var(--warning)"></span></span>
+                <span>Date: <input type="date" id="currDate" name="date" style="width:135px; border:none; font-weight:bold;"></span>
+            </div>
+
+            <table>
+                <tr><th>Student Name</th><td><input type="text" name="name" id="stuName" required></td></tr>
+                <tr><th>Class</th><td><input type="text" name="class" id="stuClass"></td></tr>
+                <tr><th>Books/Items</th><td><input type="text" name="books" id="stuBooks"></td></tr>
+                <tr><th>Total Price (₹)</th><td><input type="number" name="amount" id="amt" oninput="doCalc()"></td></tr>
+                <tr><th>Discount (₹)</th><td><input type="number" name="discount" id="disc" value="0" oninput="doCalc()"></td></tr>
+                <tr>
+                    <th>Payment</th>
+                    <td style="display:flex; gap:10px; border:none; padding:0">
+                        <input type="number" name="cash" id="cash" placeholder="Cash ₹" oninput="doCalc()" style="margin:10px">
+                        <input type="number" name="online" id="online" placeholder="Online ₹" oninput="doCalc()" style="margin:10px">
+                    </td>
+                </tr>
+                <tr style="background:#f1f3f4">
+                    <th><strong>Net Amount</strong></th>
+                    <td><input type="number" name="net" id="net" readonly style="font-weight:bold; font-size:18px; color:var(--primary);"></td>
+                </tr>
+            </table>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-save" id="saveBtn">Save & New</button>
+                <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+            </div>
+        </form>
+
+        <div class="dashboard">
+            <div class="stat-card"><h4>Today Cash</h4><p id="dashCash">₹0</p></div>
+            <div class="stat-card"><h4>Today Online</h4><p id="dashOnline">₹0</p></div>
+            <div class="stat-card"><h4>Today Disc.</h4><p id="dashDisc">₹0</p></div>
+            <div class="stat-card"><h4>Total Rec.</h4><p id="dashTotal" style="color:var(--success)">₹0</p></div>
+        </div>
+        <center><a href="#" onclick="resetCounter()" style="font-size: 10px; color: #ccc; text-decoration: none; margin-top: 15px; display: block;">Reset Serial No</a></center>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqaso1Avgh6I1bjggne8hY03w_Vo1Bd8TOj5oluzvwsS5gyuw58fRjA9--WmgCMfq2/exec';
+    let currentSerial = localStorage.getItem('rbs_serial') || 1001;
+
+    function checkLogin() {
+        if(document.getElementById('passInput').value === "RBS@2026") {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            showApp();
+        } else { alert("Wrong Password!"); }
+    }
+
+    function checkAutoLogin() { if(sessionStorage.getItem('isLoggedIn') === 'true') showApp(); }
+    
+    function showApp() { 
+        document.getElementById('loginOverlay').style.display = 'none'; 
+        document.getElementById('app').style.display = 'block'; 
+        initApp(); 
+    }
+
+    function initApp() {
+        document.getElementById('receiptNoDisplay').innerText = "RBS/2026/" + currentSerial;
+        document.getElementById('currDate').valueAsDate = new Date();
+        loadDash();
+    }
+
+    function doCalc() {
+        let c = +document.getElementById('cash').value || 0;
+        let o = +document.getElementById('online').value || 0;
+        document.getElementById('net').value = c + o;
+    }
+
+    // Search Feature
+    function performSearch() {
+        const query = document.getElementById('searchInput').value;
+        if(!query) return alert("Search term empty!");
+        
+        const btn = document.getElementById('searchBtn');
+        btn.innerText = "Finding..."; btn.disabled = true;
+
+        fetch(SCRIPT_URL + "?search=" + encodeURIComponent(query))
+        .then(res => res.json())
+        .then(data => {
+            btn.innerText = "🔍 Search"; btn.disabled = false;
+            if(data && data.length > 0) {
+                const r = data[0];
+                document.getElementById('receiptNoDisplay').innerText = r.receiptNo;
+                document.getElementById('currDate').value = r.date; // Should be yyyy-mm-dd
+                document.getElementById('stuName').value = r.name;
+                document.getElementById('stuClass').value = r.class;
+                document.getElementById('stuBooks').value = r.books;
+                document.getElementById('amt').value = r.amount;
+                document.getElementById('disc').value = r.discount;
+                document.getElementById('cash').value = r.cash;
+                document.getElementById('online').value = r.online;
+                document.getElementById('net').value = r.net;
+                alert("Record Loaded!");
+            } else { alert("No Record Found!"); }
+        })
+        .catch(err => {
+            alert("Error: Check Apps Script Deployment");
+            btn.innerText = "🔍 Search"; btn.disabled = false;
+        });
+    }
+
+    // Save Data
+    const form = document.getElementById('bookForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "Saving..."; btn.disabled = true;
+
+        let formData = new FormData(this);
+        formData.append('receiptNo', document.getElementById('receiptNoDisplay').innerText);
+
+        fetch(SCRIPT_URL, { method: 'POST', body: formData })
+        .then(() => {
+            updateDash(+document.getElementById('cash').value || 0, +document.getElementById('online').value || 0, +document.getElementById('disc').value || 0);
+            currentSerial++;
+            localStorage.setItem('rbs_serial', currentSerial);
+            alert("Saved Successfully!");
+            location.reload();
+        })
+        .catch(() => { alert("Failed to save."); btn.disabled = false; });
+    });
+
+    function updateDash(c, o, d) {
+        let today = new Date().toLocaleDateString();
+        let s = JSON.parse(localStorage.getItem('rbs_stats')) || { date: today, cash: 0, online: 0, disc: 0 };
+        if(s.date !== today) s = { date: today, cash: 0, online: 0, disc: 0 };
+        s.cash += c; s.online += o; s.disc += d;
+        localStorage.setItem('rbs_stats', JSON.stringify(s));
+    }
+
+    function loadDash() {
+        let today = new Date().toLocaleDateString();
+        let s = JSON.parse(localStorage.getItem('rbs_stats')) || { date: today, cash: 0, online: 0, disc: 0 };
+        if(s.date === today) {
+            document.getElementById('dashCash').innerText = "₹" + s.cash;
+            document.getElementById('dashOnline').innerText = "₹" + s.online;
+            document.getElementById('dashDisc').innerText = "₹" + s.disc;
+            document.getElementById('dashTotal').innerText = "₹" + (s.cash + s.online);
+        }
+    }
+
+    function resetCounter() { if(confirm("Reset to 1001?")) { localStorage.setItem('rbs_serial', 1001); location.reload(); } }
+</script>
+</body>
+</html>
