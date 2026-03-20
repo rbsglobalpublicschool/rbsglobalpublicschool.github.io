@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RBS Global - Admin Login</title>
+    <title>RBS Global - Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #1a237e;
@@ -22,7 +23,6 @@
             overflow-x: hidden;
         }
 
-        /* Modern Login Card */
         #loginOverlay {
             position: fixed;
             inset: 0;
@@ -51,26 +51,24 @@
         }
 
         .login-card img {
-            width: 100px;
+            width: 90px;
             margin-bottom: 15px;
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1));
         }
 
         .login-card h2 {
             color: var(--primary);
-            margin-bottom: 5px;
-            font-size: 22px;
+            margin: 0 0 5px 0;
+            font-size: 20px;
             font-weight: 700;
         }
 
-        .login-card p {
+        .login-card p.subtitle {
             color: #666;
             font-size: 13px;
-            margin-bottom: 25px;
+            margin: 0 0 25px 0;
         }
 
         .input-group {
-            position: relative;
             margin-bottom: 20px;
         }
 
@@ -81,14 +79,11 @@
             border-radius: 10px;
             outline: none;
             font-size: 16px;
-            transition: 0.3s;
             box-sizing: border-box;
+            transition: 0.3s;
         }
 
-        .input-group input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 8px rgba(26, 35, 126, 0.2);
-        }
+        .input-group input:focus { border-color: var(--primary); }
 
         .login-btn {
             background: var(--primary);
@@ -100,67 +95,68 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
             box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3);
         }
 
-        .login-btn:hover {
-            background: #0d125a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
+        /* FIX: Increased top margin to prevent cutting by Google Bar */
+        .main-app { 
+            display: none; 
+            width: 95%; 
+            max-width: 850px; 
+            margin: 120px auto 40px auto; 
         }
 
-        /* Hide main app initially */
-        .main-app { display: none; width: 95%; max-width: 850px; margin: 20px auto; }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+        }
         
-        /* Rest of the old CSS styles continue here... */
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        td, th { padding: 12px; border: 1px solid #eee; }
-        th { background: #f8f9fa; text-align: left; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { padding: 12px; border: 1px solid #eee; vertical-align: middle; }
+        th { background: #f8f9fa; text-align: left; width: 30%; }
+        input, select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        
         .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
         .stat-card { background: #f8f9fa; padding: 10px; border-radius: 8px; text-align: center; border-bottom: 3px solid var(--primary); }
-        @media print { #loginOverlay, .search-section, .btn-group, .dashboard { display: none !important; } }
+        
+        @media print { #loginOverlay, button, .dashboard, .search-box, .logout-btn { display: none !important; } }
     </style>
 </head>
 <body onload="checkAutoLogin()">
 
 <div id="loginOverlay">
     <div class="login-card">
-        <img src="logo.png" alt="School Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2602/2602414.png'">
-        <h2>RBS GLOBAL</h2>
-        <p>Management Portal Access</p>
-        
+        <img src="logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2602/2602414.png'">
+        <h2>RBS GLOBAL PUBLIC SCHOOL</h2>
+        <p class="subtitle">Management Portal Access</p>
         <div class="input-group">
-            <input type="password" id="passInput" placeholder="Enter Admin Password">
+            <input type="text" id="userInput" placeholder="Username">
         </div>
-        
-        <button class="login-btn" onclick="checkLogin()">Login Securely</button>
-        
-        <div style="margin-top: 20px; font-size: 11px; color: #999;">
-            © 2026 RBS Global Public School
+        <div class="input-group">
+            <input type="password" id="passInput" placeholder="Password" onkeydown="if(event.key === 'Enter') checkLogin()">
         </div>
+        <button class="login-btn" id="loginBtn" onclick="checkLogin()">Login</button>
     </div>
 </div>
 
 <div class="main-app" id="app">
     <div class="container">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-             <h3 style="color:var(--primary); margin:0;">Book Billing System</h3>
-             <button onclick="logout()" style="background:#eee; border:none; padding:5px 10px; cursor:pointer; border-radius:5px;">Logout</button>
+             <h3 style="color:var(--primary); margin:0; font-size: 24px;">Book Billing System</h3>
+             <button onclick="logout()" class="logout-btn" style="background:#f44336; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:8px; font-weight:bold;">Logout</button>
         </div>
         
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <input type="text" id="searchInput" placeholder="Search Name or Receipt...">
-            <button onclick="performSearch()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Search</button>
+        <div class="search-box" style="display:flex; gap:10px; margin-bottom:25px;">
+            <input type="text" id="searchInput" placeholder="Search Student Name or Receipt..." style="padding:12px; flex:1; border:1px solid #ddd; border-radius:8px;">
+            <button onclick="performSearch()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">🔍 Search</button>
         </div>
 
         <form id="bookForm">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <span>Receipt: <span id="receiptNoDisplay" style="color:red"></span></span>
-                <span>Date: <input type="date" id="currDate" name="date" style="width:130px; border:none"></span>
+                <span>Date: <input type="date" id="currDate" name="date" style="border:none; outline:none; font-weight:bold; width: auto; background: transparent;"></span>
             </div>
             <table>
                 <tr><th>Student Name</th><td><input type="text" name="name" id="stuName" required></td></tr>
@@ -177,22 +173,25 @@
                         </select>
                     </td>
                 </tr>
-                <tr><th>Total Price (₹)</th><td><input type="number" name="amount" id="amt" oninput="doCalc()"></td></tr>
+                <tr><th>Description</th><td><input type="text" name="books" id="stuBooks" value="Complete Book Set"></td></tr>
+                <tr><th>Amount (₹)</th><td><input type="number" name="amount" id="amt" oninput="doCalc()"></td></tr>
                 <tr><th>Discount (₹)</th><td><input type="number" name="discount" id="disc" value="0" oninput="doCalc()"></td></tr>
                 <tr>
                     <th>Payment</th>
-                    <td style="display:flex; gap:5px; border:none">
-                        <input type="number" name="cash" id="cash" placeholder="Cash" oninput="doCalc()">
-                        <input type="number" name="online" id="online" placeholder="Online" oninput="doCalc()">
+                    <td>
+                        <div style="display:flex; gap:10px;">
+                            <input type="number" name="cash" id="cash" placeholder="Cash" oninput="doCalc()">
+                            <input type="number" name="online" id="online" placeholder="Online" oninput="doCalc()">
+                        </div>
                     </td>
                 </tr>
                 <tr style="background:#f1f3f4">
                     <th><strong>Net Total</strong></th>
-                    <td><input type="number" name="net" id="net" readonly style="font-weight:bold; color:var(--primary)"></td>
+                    <td><input type="number" name="net" id="net" readonly style="font-weight:bold; color:var(--primary); border:none; background:transparent;"></td>
                 </tr>
             </table>
             <div style="margin-top:20px; display:flex; gap:10px;">
-                <button type="submit" id="saveBtn" style="flex:1; padding:15px; background:green; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">Save Receipt</button>
+                <button type="submit" id="saveBtn" style="flex:1; padding:15px; background:#2e7d32; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">Save Receipt</button>
                 <button type="button" onclick="window.print()" style="flex:1; padding:15px; background:#0277bd; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">Print Invoice</button>
             </div>
         </form>
@@ -201,35 +200,40 @@
             <div class="stat-card"><h4>Cash</h4><p id="dashCash">₹0</p></div>
             <div class="stat-card"><h4>Online</h4><p id="dashOnline">₹0</p></div>
             <div class="stat-card"><h4>Disc.</h4><p id="dashDisc">₹0</p></div>
-            <div class="stat-card"><h4>Total</h4><p id="dashTotal" style="color:green">₹0</p></div>
+            <div class="stat-card"><h4>Total</h4><p id="dashTotal" style="color:green; font-weight:bold;">₹0</p></div>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlIM_P94eRYwA1EJO9ImkjKbb5QnTVMxEvuZGXmmmRkRZQSI9g6S_0CASnyEQ-X86Z/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZeEpkqfCdd64m6nud2_KkR1V64PbHbnnaGczphGpi6hVSTKzhLvhhlRqcox-zQCcg/exec';
     let serial = localStorage.getItem('rbs_serial') || 1001;
 
-    // Login logic with updated UI handling
     function checkLogin() {
+        const user = document.getElementById('userInput').value;
         const pass = document.getElementById('passInput').value;
-        if(pass === "RBS@2026") {
-            sessionStorage.setItem('isLoggedIn', 'true');
-            showApp();
-        } else {
-            alert("❌ Incorrect Password. Access Denied!");
-        }
+        const btn = document.getElementById('loginBtn');
+        if(!user || !pass) return alert("Please fill all fields!");
+        btn.innerText = "Verifying...";
+        btn.disabled = true;
+        fetch(SCRIPT_URL + "?action=login&user=" + encodeURIComponent(user) + "&pass=" + encodeURIComponent(pass))
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                showApp();
+            } else {
+                alert("❌ Invalid Username or Password!");
+                btn.innerText = "Login"; btn.disabled = false;
+            }
+        }).catch(err => {
+            alert("Connection Error!");
+            btn.innerText = "Login"; btn.disabled = false;
+        });
     }
 
-    function logout() {
-        sessionStorage.removeItem('isLoggedIn');
-        location.reload();
-    }
-
-    function checkAutoLogin() { 
-        if(sessionStorage.getItem('isLoggedIn') === 'true') showApp(); 
-    }
-
+    function logout() { sessionStorage.removeItem('isLoggedIn'); location.reload(); }
+    function checkAutoLogin() { if(sessionStorage.getItem('isLoggedIn') === 'true') showApp(); }
     function showApp() { 
         document.getElementById('loginOverlay').style.display='none'; 
         document.getElementById('app').style.display='block'; 
@@ -247,6 +251,7 @@
         const pricing = { "Nursery/LKG/UKG": 1800, "Class 1 to 5": 2500, "Class 6 to 8": 3200, "Class 9 & 10": 4500 };
         if(cls && pricing[cls]) {
             document.getElementById('amt').value = pricing[cls];
+            document.getElementById('stuBooks').value = cls + " - Full Book Set";
             doCalc();
         }
     }
@@ -259,6 +264,7 @@
 
     function performSearch() {
         const query = document.getElementById('searchInput').value;
+        if(!query) return;
         fetch(SCRIPT_URL + "?search=" + encodeURIComponent(query))
         .then(res => res.json())
         .then(data => {
@@ -270,29 +276,36 @@
                 document.getElementById('cash').value = r.cash;
                 document.getElementById('online').value = r.online;
                 document.getElementById('net').value = r.net;
-                alert("Data found!");
+                alert("Record Loaded!");
             } else { alert("Not Found!"); }
         });
     }
 
     document.getElementById('bookForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const b = document.getElementById('saveBtn'); b.innerText = "Saving...";
+        const b = document.getElementById('saveBtn'); b.innerText = "Saving..."; b.disabled = true;
         let fd = new FormData(this);
         fd.append('receiptNo', document.getElementById('receiptNoDisplay').innerText);
         fetch(SCRIPT_URL, { method: 'POST', body: fd }).then(() => {
+            saveLocalStats(+document.getElementById('cash').value, +document.getElementById('online').value, +document.getElementById('disc').value);
             serial++; localStorage.setItem('rbs_serial', serial);
             location.reload();
         });
     });
 
+    function saveLocalStats(c, o, d) {
+        let s = JSON.parse(localStorage.getItem('rbs_stats')) || { cash: 0, online: 0, disc: 0 };
+        s.cash += c; s.online += o; s.disc += d;
+        localStorage.setItem('rbs_stats', JSON.stringify(s));
+    }
+
     function loadDash() {
         let s = JSON.parse(localStorage.getItem('rbs_stats')) || { cash: 0, online: 0, disc: 0 };
         document.getElementById('dashCash').innerText = "₹" + s.cash;
         document.getElementById('dashOnline').innerText = "₹" + s.online;
+        document.getElementById('dashDisc').innerText = "₹" + s.disc;
         document.getElementById('dashTotal').innerText = "₹" + (s.cash + s.online);
     }
 </script>
-
 </body>
 </html>
