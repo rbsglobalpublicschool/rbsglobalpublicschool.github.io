@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookStore Pro — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0f0e17; --surface:#1a1828; --surface2:#232136;
+  --accent:#e8a838; --accent2:#c96b3f;
+  --green:#3ecf8e; --purple:#a78bfa; --pink:#f472b6;
+  --text:#e8e6f0; --muted:#9895a8;
+  --border:rgba(255,255,255,0.07);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 10%,rgba(232,168,56,.06) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 80%,rgba(62,207,142,.05) 0%,transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 36px;border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;background:rgba(15,14,23,.9)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo h1{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;line-height:1}
+.logo span{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+nav{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:12px;border:1px solid var(--border)}
+nav button{background:none;border:none;color:var(--muted);padding:8px 18px;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .2s}
+nav button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+nav button:hover:not(.active){color:var(--text);background:var(--surface2)}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.date-badge{background:var(--surface);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:12px;color:var(--muted)}
+.sheet-status{display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface)}
+.dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s}
+.dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot.error{background:#e05c8e}
+
+/* CONFIG BANNER */
+.config-banner{background:linear-gradient(135deg,rgba(232,168,56,.12),rgba(201,107,63,.08));border:1px solid rgba(232,168,56,.25);border-radius:14px;padding:20px 28px;margin:28px 36px;display:flex;align-items:center;gap:16px}
+.config-banner.hidden{display:none}
+.config-banner .icon{font-size:28px}
+.config-banner h3{font-family:'Playfair Display',serif;font-size:16px;margin-bottom:4px}
+.config-banner p{font-size:13px;color:var(--muted)}
+.config-banner input{background:var(--bg);border:1px solid rgba(232,168,56,.4);border-radius:10px;color:var(--text);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;width:380px;outline:none;transition:border-color .2s}
+.config-banner input:focus{border-color:var(--accent)}
+.btn-sm{padding:10px 20px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(232,168,56,.3)}
+.btn-accent:hover{transform:translateY(-1px)}
+
+/* PAGES */
+.page{display:none;padding:28px 36px}
+.page.active{display:block}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card:nth-child(1)::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.stat-card:nth-child(2)::before{background:linear-gradient(90deg,var(--green),#2ca86e)}
+.stat-card:nth-child(3)::before{background:linear-gradient(90deg,#7c6af0,var(--purple))}
+.stat-card:nth-child(4)::before{background:linear-gradient(90deg,#e05c8e,var(--pink))}
+.stat-icon{font-size:26px;margin-bottom:10px}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px}
+.stat-value{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--green);margin-top:5px}
+
+/* CARDS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:22px;margin-bottom:24px;animation:fadeUp .5s .1s ease both}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:26px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600}
+.card-badge{font-size:11px;background:rgba(232,168,56,.15);color:var(--accent);padding:3px 10px;border-radius:20px;border:1px solid rgba(232,168,56,.3)}
+.chart-wrap{position:relative;height:240px}
+
+/* TABLE */
+.table-wrap{animation:fadeUp .5s .2s ease both}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:11px 14px;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody td{padding:13px 14px;vertical-align:middle}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-cash{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.3)}
+.badge-online{background:rgba(124,106,240,.15);color:var(--purple);border:1px solid rgba(124,106,240,.3)}
+.badge-mixed{background:rgba(232,168,56,.15);color:var(--accent);border:1px solid rgba(232,168,56,.3)}
+.empty-row td{text-align:center;padding:40px;color:var(--muted)}
+
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row td{text-align:center;padding:40px;color:var(--muted)}
+
+/* ── BILLING FORM ── */
+.form-container{max-width:880px;margin:0 auto;animation:fadeUp .5s ease both}
+.form-header{text-align:center;margin-bottom:32px}
+.form-header h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.form-header p{color:var(--muted);font-size:14px;margin-top:6px}
+.bill-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;box-shadow:var(--shadow)}
+.bill-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px;border-bottom:2px dashed var(--border);margin-bottom:28px}
+.bill-no span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px}
+.bill-no strong{font-family:'Playfair Display',serif;font-size:22px;color:var(--accent)}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.form-grid{display:grid;gap:18px;margin-bottom:24px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,168,56,.1)}
+.field input::placeholder{color:rgba(152,149,168,.45)}
+.field select option{background:var(--surface2)}
+
+/* Book rows */
+.book-item{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;transition:border-color .2s}
+.book-item:hover{border-color:rgba(232,168,56,.3)}
+.book-item .field label{font-size:10px}
+.rm-btn{background:rgba(224,92,142,.15);border:1px solid rgba(224,92,142,.3);color:#e05c8e;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;align-self:flex-end}
+.rm-btn:hover{background:rgba(224,92,142,.3)}
+.add-book-btn{background:none;border:1px dashed rgba(232,168,56,.4);color:var(--accent);padding:11px;border-radius:10px;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;transition:all .2s}
+.add-book-btn:hover{background:rgba(232,168,56,.05);border-style:solid}
+
+/* Payment */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}
+.pay-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:18px;transition:border-color .2s}
+.pay-box:hover{border-color:rgba(232,168,56,.3)}
+.pay-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.pay-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.pi-cash{background:rgba(62,207,142,.15)} .pi-online{background:rgba(124,106,240,.15)}
+.pay-hdr h4{font-size:13px;font-weight:600} .pay-hdr span{font-size:11px;color:var(--muted)}
+
+/* Summary */
+.summary-box{background:linear-gradient(135deg,rgba(232,168,56,.08),rgba(201,107,63,.08));border:1px solid rgba(232,168,56,.2);border-radius:14px;padding:22px;margin-bottom:24px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px}
+.sum-row:not(:last-child){border-bottom:1px solid rgba(232,168,56,.1)}
+.sum-row span{color:var(--muted)}
+.sum-row.total{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--accent);border-top:2px solid rgba(232,168,56,.3)!important;padding-top:14px!important;margin-top:6px}
+.sum-row.total span{color:var(--text)}
+
+/* Buttons */
+.btn-row{display:flex;gap:10px;justify-content:flex-end}
+.btn{padding:13px 26px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:7px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 18px rgba(232,168,56,.3)}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 26px rgba(232,168,56,.4)}
+.btn-green{background:linear-gradient(135deg,var(--green),#2ca86e);color:#fff;box-shadow:0 4px 18px rgba(62,207,142,.25)}
+.btn-green:hover:not(:disabled){transform:translateY(-2px)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:30px;max-width:440px;width:90%;text-align:center;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal .check{font-size:52px;margin-bottom:14px}
+.modal h3{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:6px}
+.modal p{color:var(--muted);font-size:13px;margin-bottom:22px}
+.modal .btn-row{justify-content:center}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;display:flex;align-items:center;gap:10px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(62,207,142,.4);color:var(--green)}
+.toast.error{border-color:rgba(224,92,142,.4);color:#e05c8e}
+
+/* Responsive */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .charts-row{grid-template-columns:1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .pay-grid{grid-template-columns:1fr}
+  .book-item{grid-template-columns:1fr 1fr}
+  header{padding:14px 18px}
+  .page{padding:20px 14px}
+  .config-banner{flex-direction:column;margin:16px}
+  .config-banner input{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <div>
+      <h1>BookStore Pro</h1>
+      <span>Sales & Billing</span>
+    </div>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+    <button onclick="showPage('billing',this)">🧾 New Bill</button>
+    <button onclick="showPage('records',this)">📋 Records</button>
+  </nav>
+  <div class="hdr-right">
+    <div class="date-badge" id="dateBadge"></div>
+    <div class="sheet-status" title="Google Sheets connection">
+      <div class="dot" id="connDot"></div>
+      <span id="connLabel">Not connected</span>
+    </div>
+  </div>
+</header>
+
+<!-- CONFIG BANNER -->
+<div class="config-banner" id="configBanner">
+  <div class="icon">🔗</div>
+  <div style="flex:1">
+    <h3>Connect to Google Sheets</h3>
+    <p>Paste your Google Apps Script Web App URL below, then click Connect.</p>
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/XXXXXX/exec" />
+      <button class="btn-sm btn-accent" onclick="connectSheet()">Connect →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ DASHBOARD ══════ -->
+<div class="page active" id="dashboard">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" id="sRevenue">—</div><div class="stat-sub" id="sRevSub">Connect sheet to load</div></div>
+    <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-label">Total Bills</div><div class="stat-value" id="sBills">—</div><div class="stat-sub" id="sBillSub" style="color:var(--purple)">—</div></div>
+    <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-label">Cash Collected</div><div class="stat-value" id="sCash">—</div><div class="stat-sub" id="sCashSub" style="color:var(--green)">—</div></div>
+    <div class="stat-card"><div class="stat-icon">📱</div><div class="stat-label">Online Collected</div><div class="stat-value" id="sOnline">—</div><div class="stat-sub" id="sOnlineSub" style="color:var(--pink)">—</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Daily Revenue Trend</div><div class="card-badge" id="chartMonthBadge">—</div></div>
+      <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Sales by Subject</div><div class="card-badge">Books</div></div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-row" style="margin-bottom:0">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Weekly Revenue (Last 7 Days)</div><div class="card-badge">₹ INR</div></div>
+      <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Payment Mode Split</div><div class="card-badge">All Time</div></div>
+      <div class="chart-wrap"><canvas id="payChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ BILLING ══════ -->
+<div class="page" id="billing">
+  <div class="form-container">
+    <div class="form-header">
+      <h2>📚 Book Billing Form</h2>
+      <p>Fill in the details below and save directly to Google Sheets</p>
+    </div>
+    <div class="bill-card">
+      <div class="bill-top">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="logo-icon" style="width:46px;height:46px;border-radius:14px;font-size:22px">📚</div>
+          <div><div style="font-family:'Playfair Display',serif;font-size:19px;font-weight:700">BookStore Pro</div><div style="font-size:11px;color:var(--muted)">Sales & Billing System</div></div>
+        </div>
+        <div class="bill-no"><span>Bill Number</span><strong id="billNumber">Auto-assigned</strong></div>
+      </div>
+
+      <!-- Basic Info -->
+      <div class="sec-title">📋 Bill Information</div>
+      <div class="form-grid g3" style="margin-bottom:24px">
+        <div class="field"><label>📅 Date</label><input type="date" id="billDate"/></div>
+        <div class="field"><label>🎓 Student Name</label><input type="text" id="studentName" placeholder="Enter full name"/></div>
+        <div class="field"><label>🏫 Class / Grade</label>
+          <select id="studentClass">
+            <option value="">Select Class</option>
+            <option>Class 1</option><option>Class 2</option><option>Class 3</option><option>Class 4</option><option>Class 5</option>
+            <option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option>
+            <option>Class 11 (Science)</option><option>Class 11 (Commerce)</option><option>Class 11 (Arts)</option>
+            <option>Class 12 (Science)</option><option>Class 12 (Commerce)</option><option>Class 12 (Arts)</option>
+            <option>UG / PG</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Books -->
+      <div class="sec-title">📖 Book Details</div>
+      <div id="bookItems"></div>
+      <button class="add-book-btn" onclick="addBookRow()">＋ Add Another Book</button>
+      <div style="height:24px"></div>
+
+      <!-- Amount -->
+      <div class="sec-title">💵 Amount Summary</div>
+      <div class="summary-box">
+        <div class="sum-row"><span>Subtotal</span><strong id="subtotalVal">₹ 0.00</strong></div>
+        <div class="sum-row"><span>Discount</span><strong id="discountVal" style="color:#e05c8e">− ₹ 0.00</strong></div>
+        <div class="sum-row total"><span>Net Payable</span><strong id="netVal">₹ 0.00</strong></div>
+      </div>
+
+      <div class="form-grid g2" style="margin-bottom:24px">
+        <div class="field"><label>🏷️ Discount (₹)</label><input type="number" id="discountAmt" placeholder="0" min="0" oninput="recalc()"/></div>
+        <div class="field"><label>📝 Remarks</label><input type="text" id="remarks" placeholder="Optional note..."/></div>
+      </div>
+
+      <!-- Payment -->
+      <div class="sec-title">💳 Payment Details</div>
+      <div class="pay-grid">
+        <div class="pay-box">
+          <div class="pay-hdr"><div class="pay-icon pi-cash">💵</div><div><h4>Cash Payment</h4><span>Physical currency</span></div></div>
+          <div class="field"><label>Amount Paid in Cash (₹)</label><input type="number" id="cashAmt" placeholder="0.00" min="0" oninput="recalcPayment()"/></div>
+        </div>
+        <div class="pay-box">
+          <div class="pay-hdr"><div class="pay-icon pi-online">📱</div><div><h4>Online Payment</h4><span>UPI / Card / Net Banking</span></div></div>
+          <div class="field"><label>Amount Paid Online (₹)</label><input type="number" id="onlineAmt" placeholder="0.00" min="0" oninput="recalcPayment()"/></div>
+        </div>
+      </div>
+
+      <div id="payStatus" style="margin-bottom:22px;display:none">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;font-size:14px">
+          <span style="color:var(--muted)">Balance Due</span>
+          <strong id="balanceDue">₹ 0.00</strong>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveBill()">💾 Save to Google Sheets</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ RECORDS ══════ -->
+<div class="page" id="records">
+  <div class="card table-wrap">
+    <div class="card-header">
+      <div class="card-title">All Bills — Google Sheets Records</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-sm btn-accent" onclick="loadRecords()">🔄 Refresh</button>
+        <button class="btn-sm btn-accent" onclick="showPage('billing',document.querySelectorAll('nav button')[1])">＋ New Bill</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Bill #</th><th>Date</th><th>Student</th><th>Class</th>
+        <th>Books</th><th>Subtotal</th><th>Discount</th><th>Net Paid</th>
+        <th>Cash</th><th>Online</th><th>Balance</th><th>Mode</th>
+      </tr></thead>
+      <tbody id="recordsBody"><tr class="loading-row"><td colspan="12">Connect Google Sheets to view records</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="check">✅</div>
+    <h3>Bill Saved!</h3>
+    <p id="modalMsg">Bill saved successfully to Google Sheets.</p>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="closeModal();showPage('records',document.querySelectorAll('nav button')[2])">View Records</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbys0_egN8DfQAQjjRb-Dr_p8VApSWnMXy7Sf_tHtSIvFG2oOXvXlNT4mrSno8knYGUmDQ/exec';
+let SCRIPT_URL = HARDCODED_URL;
+localStorage.setItem('bookstore_script_url', SCRIPT_URL);
+let charts = {};
+let bookRowCount = 0;
+
+// Init
+document.getElementById('dateBadge').textContent =
+  new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('billDate').valueAsDate = new Date();
+
+// Auto-connect on load
+document.getElementById('scriptUrl').value = SCRIPT_URL;
+document.getElementById('configBanner').classList.add('hidden');
+setConnectionStatus(null, 'Connecting…');
+// defer so DOM + charts are ready
+setTimeout(() => {
+  fetchStats()
+    .then(() => { setConnectionStatus(true, 'Connected'); showToast('✅ Google Sheets connected!', 'success'); })
+    .catch(() => { setConnectionStatus(false, 'Failed'); document.getElementById('configBanner').classList.remove('hidden'); showToast('❌ Could not reach Google Sheets. Check deployment permissions.', 'error'); });
+}, 300);
+
+// ── Connection ──────────────────────────────────────────────
+function connectSheet() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    showToast('⚠️ Please enter a valid Apps Script URL', 'error'); return;
+  }
+  SCRIPT_URL = url;
+  localStorage.setItem('bookstore_script_url', url);
+  applyConnection();
+}
+
+function applyConnection() {
+  document.getElementById('configBanner').classList.add('hidden');
+  setConnectionStatus(null, 'Connecting…');
+  fetchStats().then(() => {
+    setConnectionStatus(true, 'Connected');
+    showToast('✅ Google Sheets connected!', 'success');
+  }).catch(() => {
+    setConnectionStatus(false, 'Failed');
+    document.getElementById('configBanner').classList.remove('hidden');
+    showToast('❌ Connection failed. Check URL & permissions.', 'error');
+  });
+}
+
+function setConnectionStatus(ok, label) {
+  const dot = document.getElementById('connDot');
+  const lbl = document.getElementById('connLabel');
+  dot.className = 'dot' + (ok === true ? ' connected' : ok === false ? ' error' : '');
+  lbl.textContent = label || (ok ? 'Connected' : 'Not connected');
+}
+
+// ── API call ────────────────────────────────────────────────
+async function callScript(action, payload = {}) {
+  if (!SCRIPT_URL) throw new Error('No script URL');
+  const url = action === 'getBills' || action === 'getStats'
+    ? `${SCRIPT_URL}?action=${action}`
+    : SCRIPT_URL;
+
+  const opts = action === 'saveBill'
+    ? { method: 'POST', body: JSON.stringify({ action, ...payload }) }
+    : { method: 'GET' };
+
+  const res  = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+// ══════════════════════════════════════════
+//  DASHBOARD STATS & CHARTS
+// ══════════════════════════════════════════
+async function fetchStats() {
+  const [statsData, billsData] = await Promise.all([
+    callScript('getStats'),
+    callScript('getBills')
+  ]);
+  const combined = { ...statsData, bills: billsData.bills || [] };
+  renderStats(combined);
+  renderCharts(combined);
+}
+
+function renderStats(data) {
+  const bills = data.bills || [];
+
+  // compute from bills array for stats
+  let revenue = 0, cash = 0, online = 0;
+  bills.forEach(b => {
+    revenue += parseFloat(b.netAmount) || 0;
+    cash    += parseFloat(b.cashPaid)  || 0;
+    online  += parseFloat(b.onlinePaid)|| 0;
+  });
+
+  document.getElementById('sRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+  document.getElementById('sRevSub').textContent   = `from ${bills.length} bills`;
+  document.getElementById('sBills').textContent    = bills.length;
+  document.getElementById('sBillSub').textContent  = `${bills.filter(b=>b.balanceDue>0).length} with pending balance`;
+  document.getElementById('sCash').textContent     = '₹' + cash.toLocaleString('en-IN');
+  document.getElementById('sCashSub').textContent  = `${Math.round(cash/(revenue||1)*100)}% of total`;
+  document.getElementById('sOnline').textContent   = '₹' + online.toLocaleString('en-IN');
+  document.getElementById('sOnlineSub').textContent= `${Math.round(online/(revenue||1)*100)}% of total`;
+}
+
+const CHART_OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#9895a8', font: { family: 'DM Sans', size: 11 } } } }
+};
+
+function renderCharts(data) {
+  const { dailySales={}, categorySales={}, weeklySales={}, paymentModes={}, bills=[] } = data;
+
+  // 1) Daily Sales line chart
+  const dlabels = Object.keys(dailySales).slice(-23);
+  const dvals   = dlabels.map(k => dailySales[k]);
+  const ctx1 = document.getElementById('salesChart').getContext('2d');
+  if (charts.sales) charts.sales.destroy();
+  const grad = ctx1.createLinearGradient(0,0,0,240);
+  grad.addColorStop(0,'rgba(232,168,56,.3)'); grad.addColorStop(1,'rgba(232,168,56,0)');
+  charts.sales = new Chart(ctx1, {
+    type: 'line',
+    data: { labels: dlabels.length ? dlabels : ['No data'],
+      datasets: [{ label:'Revenue (₹)', data: dvals.length ? dvals : [0],
+        borderColor:'#e8a838', backgroundColor: grad, borderWidth:2.5,
+        pointBackgroundColor:'#e8a838', pointRadius:3, pointHoverRadius:6,
+        fill:true, tension:0.4 }] },
+    options: { ...CHART_OPTS, scales: {
+      x:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9895a8',font:{size:10}} },
+      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9895a8',callback:v=>'₹'+v.toLocaleString('en-IN')} }
+    }}
+  });
+  document.getElementById('chartMonthBadge').textContent = new Date().toLocaleString('en-IN',{month:'long',year:'numeric'});
+
+  // 2) Category doughnut
+  const ckeys = Object.keys(categorySales);
+  const cvals = ckeys.map(k => categorySales[k]);
+  const COLORS = ['#e8a838','#3ecf8e','#7c6af0','#e05c8e','#4a9eff','#fbbf24','#34d399'];
+  if (charts.cat) charts.cat.destroy();
+  charts.cat = new Chart(document.getElementById('catChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: ckeys.length ? ckeys : ['No data'],
+      datasets: [{ data: cvals.length ? cvals : [1],
+        backgroundColor: COLORS, borderColor:'#1a1828', borderWidth:3, hoverOffset:8 }] },
+    options: { ...CHART_OPTS, cutout:'65%' }
+  });
+
+  // 3) Weekly bar
+  const wlabels = Object.keys(weeklySales);
+  const wvals   = wlabels.map(k => weeklySales[k]);
+  if (charts.week) charts.week.destroy();
+  charts.week = new Chart(document.getElementById('weekChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: wlabels.length ? wlabels : ['No data'],
+      datasets: [{ label:'Revenue (₹)', data: wvals.length ? wvals : [0],
+        backgroundColor:'rgba(232,168,56,.8)', borderRadius:6 }] },
+    options: { ...CHART_OPTS, scales: {
+      x:{ grid:{display:false}, ticks:{color:'#9895a8'} },
+      y:{ grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9895a8',callback:v=>'₹'+v.toLocaleString('en-IN')} }
+    }}
+  });
+
+  // 4) Payment doughnut
+  if (charts.pay) charts.pay.destroy();
+  charts.pay = new Chart(document.getElementById('payChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels:['Cash','Online'],
+      datasets: [{ data:[paymentModes.cash||0, paymentModes.online||0],
+        backgroundColor:['rgba(62,207,142,.8)','rgba(124,106,240,.8)'],
+        borderColor:'#1a1828', borderWidth:3, hoverOffset:8 }] },
+    options: { ...CHART_OPTS, cutout:'60%' }
+  });
+}
+
+// ══════════════════════════════════════════
+//  RECORDS
+// ══════════════════════════════════════════
+async function loadRecords() {
+  const tbody = document.getElementById('recordsBody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="12"><span class="spinner"></span>Loading from Google Sheets…</td></tr>';
+  try {
+    const data = await callScript('getBills');
+    renderRecords(data.bills || []);
+  } catch(e) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="12">❌ Could not load records — ${e.message}</td></tr>`;
+  }
+}
+
+function renderRecords(bills) {
+  const tbody = document.getElementById('recordsBody');
+  if (!bills.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No bills found. Create your first bill!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = bills.map(b => {
+    const cash   = parseFloat(b.cashPaid)||0;
+    const online = parseFloat(b.onlinePaid)||0;
+    const mode   = cash>0&&online>0?'mixed':online>0?'online':'cash';
+    return `<tr>
+      <td style="color:var(--accent);font-weight:600">${b.billNo||'—'}</td>
+      <td style="color:var(--muted)">${b.date||'—'}</td>
+      <td>${b.studentName||'—'}</td>
+      <td><span style="background:rgba(124,106,240,.15);color:var(--purple);padding:3px 10px;border-radius:20px;font-size:11px">${b.studentClass||'—'}</span></td>
+      <td>${Array.isArray(b.books)?b.books.length+' book'+(b.books.length>1?'s':''):'—'}</td>
+      <td>₹${parseFloat(b.subtotal||0).toLocaleString('en-IN')}</td>
+      <td style="color:#e05c8e">₹${parseFloat(b.discount||0).toLocaleString('en-IN')}</td>
+      <td style="font-weight:600">₹${parseFloat(b.netAmount||0).toLocaleString('en-IN')}</td>
+      <td style="color:var(--green)">₹${cash.toLocaleString('en-IN')}</td>
+      <td style="color:var(--purple)">₹${online.toLocaleString('en-IN')}</td>
+      <td style="color:${parseFloat(b.balanceDue||0)>0?'#e05c8e':'var(--green)'}">₹${parseFloat(b.balanceDue||0).toLocaleString('en-IN')}</td>
+      <td><span class="badge badge-${mode}">${mode}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  BILLING FORM
+// ══════════════════════════════════════════
+function addBookRow() {
+  bookRowCount++;
+  const id = bookRowCount;
+  const div = document.createElement('div');
+  div.className = 'book-item'; div.id = `book-${id}`;
+  div.innerHTML = `
+    <div class="field"><label>Book Name / Title</label><input type="text" placeholder="e.g. Mathematics Part I" oninput="recalc()"/></div>
+    <div class="field"><label>Subject</label>
+      <select oninput="recalc()">
+        <option>-- Select --</option>
+        <option>Mathematics</option><option>Science</option><option>English</option>
+        <option>Hindi</option><option>Social Studies</option><option>Physics</option>
+        <option>Chemistry</option><option>Biology</option><option>History</option>
+        <option>Geography</option><option>Accountancy</option><option>Economics</option>
+        <option>Computer Science</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Qty</label><input type="number" value="1" min="1" oninput="recalc()"/></div>
+    <div class="field"><label>Unit Price (₹)</label><input type="number" placeholder="0.00" min="0" oninput="recalc()"/></div>
+    <button class="rm-btn" onclick="document.getElementById('book-${id}').remove();recalc()" title="Remove">✕</button>
+  `;
+  document.getElementById('bookItems').appendChild(div);
+  recalc();
+}
+
+function recalc() {
+  let sub = 0;
+  document.querySelectorAll('.book-item').forEach(row => {
+    const inputs = row.querySelectorAll('input[type=number]');
+    const qty = parseFloat(inputs[0]?.value||0);
+    const prc = parseFloat(inputs[1]?.value||0);
+    sub += qty * prc;
+  });
+  const disc = parseFloat(document.getElementById('discountAmt')?.value||0);
+  const net  = Math.max(0, sub - disc);
+  document.getElementById('subtotalVal').textContent = '₹ '+sub.toFixed(2);
+  document.getElementById('discountVal').textContent = '− ₹ '+disc.toFixed(2);
+  document.getElementById('netVal').textContent      = '₹ '+net.toFixed(2);
+  recalcPayment();
+}
+
+function recalcPayment() {
+  const net    = parseFloat(document.getElementById('netVal').textContent.replace('₹ ',''))||0;
+  const cash   = parseFloat(document.getElementById('cashAmt')?.value||0);
+  const online = parseFloat(document.getElementById('onlineAmt')?.value||0);
+  const bal    = net - cash - online;
+  const ps     = document.getElementById('payStatus');
+  if (cash > 0 || online > 0) {
+    ps.style.display='block';
+    const bd = document.getElementById('balanceDue');
+    bd.textContent = bal > 0 ? '₹ '+bal.toFixed(2) : '✓ Fully Paid';
+    bd.style.color = bal > 0 ? '#e05c8e' : 'var(--green)';
+  } else { ps.style.display='none'; }
+}
+
+// ── Save bill ────────────────────────────────────────────────
+async function saveBill() {
+  if (!SCRIPT_URL) { showToast('⚠️ Please connect Google Sheets first', 'error'); return; }
+
+  const student = document.getElementById('studentName').value.trim();
+  const cls     = document.getElementById('studentClass').value;
+  if (!student) { showToast('⚠️ Please enter student name', 'error'); return; }
+
+  const books = [];
+  document.querySelectorAll('.book-item').forEach(row => {
+    const name  = row.querySelector('input[type=text]')?.value||'';
+    const subj  = row.querySelector('select')?.value||'';
+    const inputs= row.querySelectorAll('input[type=number]');
+    const qty   = inputs[0]?.value||1;
+    const price = inputs[1]?.value||0;
+    if (name || price > 0) books.push({ name, subject: subj, qty, price });
+  });
+
+  const subtotal   = parseFloat(document.getElementById('subtotalVal').textContent.replace('₹ ',''))||0;
+  const discount   = parseFloat(document.getElementById('discountAmt')?.value||0);
+  const netAmount  = parseFloat(document.getElementById('netVal').textContent.replace('₹ ',''))||0;
+  const cashPaid   = parseFloat(document.getElementById('cashAmt')?.value||0);
+  const onlinePaid = parseFloat(document.getElementById('onlineAmt')?.value||0);
+  const balanceDue = Math.max(0, netAmount - cashPaid - onlinePaid);
+
+  const payload = {
+    date: document.getElementById('billDate').value,
+    studentName: student, studentClass: cls, books,
+    subtotal, discount, netAmount, cashPaid, onlinePaid, balanceDue,
+    remarks: document.getElementById('remarks').value
+  };
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving…';
+
+  try {
+    const res = await callScript('saveBill', payload);
+    document.getElementById('billNumber').textContent = res.billNo || '—';
+    document.getElementById('modalMsg').textContent   = `Bill ${res.billNo} saved to Google Sheets!`;
+    document.getElementById('successModal').classList.add('show');
+    // Refresh stats silently
+    if (SCRIPT_URL) fetchStats().catch(()=>{});
+  } catch(e) {
+    showToast('❌ Failed to save: '+e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Save to Google Sheets';
+  }
+}
+
+function resetForm() {
+  ['studentName','discountAmt','cashAmt','onlineAmt','remarks'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('studentClass').value='';
+  document.getElementById('bookItems').innerHTML='';
+  document.getElementById('payStatus').style.display='none';
+  document.getElementById('billNumber').textContent='Auto-assigned';
+  bookRowCount=0;
+  addBookRow();
+}
+
+function closeModal() { document.getElementById('successModal').classList.remove('show'); resetForm(); }
+
+// ── Page nav ─────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id==='records' && SCRIPT_URL) loadRecords();
+  if (id==='dashboard' && SCRIPT_URL) fetchStats().catch(()=>{});
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// Init form
+addBookRow();
+</script>
+</body>
+</html>
