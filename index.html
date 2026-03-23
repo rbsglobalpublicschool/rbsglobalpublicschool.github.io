@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookStore Pro — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f0e17;--surface:#1a1828;--surface2:#232136;
+  --accent:#e8a838;--accent2:#c96b3f;
+  --green:#3ecf8e;--purple:#a78bfa;--pink:#f472b6;--blue:#4a9eff;
+  --text:#e8e6f0;--muted:#9895a8;
+  --border:rgba(255,255,255,0.07);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);--r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 10%,rgba(232,168,56,.06) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 80%,rgba(62,207,142,.05) 0%,transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;background:rgba(15,14,23,.92);flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;line-height:1}
+.logo span{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+nav{display:flex;gap:3px;background:var(--surface);padding:4px;border-radius:12px;border:1px solid var(--border)}
+nav button{background:none;border:none;color:var(--muted);padding:7px 13px;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .2s;white-space:nowrap}
+nav button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+nav button:hover:not(.active){color:var(--text);background:var(--surface2)}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.date-badge{background:var(--surface);border:1px solid var(--border);padding:7px 12px;border-radius:10px;font-size:11px;color:var(--muted)}
+.sheet-status{display:flex;align-items:center;gap:6px;font-size:11px;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.dot{width:7px;height:7px;border-radius:50%;background:#555;transition:all .4s}
+.dot.connected{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot.connecting{background:var(--accent);animation:pulse .8s ease infinite}
+.dot.error{background:#e05c8e}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* PAGES */
+.page{display:none;padding:26px 32px}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;animation:fadeUp .4s ease both}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card:nth-child(1)::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.stat-card:nth-child(2)::before{background:linear-gradient(90deg,var(--green),#2ca86e)}
+.stat-card:nth-child(3)::before{background:linear-gradient(90deg,#7c6af0,var(--purple))}
+.stat-card:nth-child(4)::before{background:linear-gradient(90deg,#e05c8e,var(--pink))}
+.stat-icon{font-size:24px;margin-bottom:8px}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px}
+.stat-value{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--green);margin-top:4px}
+
+/* CARDS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:22px;animation:fadeUp .4s .1s ease both}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600}
+.card-badge{font-size:11px;background:rgba(232,168,56,.15);color:var(--accent);padding:3px 10px;border-radius:20px;border:1px solid rgba(232,168,56,.3)}
+.chart-wrap{position:relative;height:220px}
+
+/* TABLE */
+.table-wrap{animation:fadeUp .4s .2s ease both}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 13px;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody td{padding:12px 13px;vertical-align:middle}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-cash{background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.3)}
+.badge-online{background:rgba(124,106,240,.15);color:var(--purple);border:1px solid rgba(124,106,240,.3)}
+.badge-mixed{background:rgba(232,168,56,.15);color:var(--accent);border:1px solid rgba(232,168,56,.3)}
+.empty-row td,.loading-row td{text-align:center;padding:36px;color:var(--muted)}
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BILLING FORM */
+.form-container{max-width:900px;margin:0 auto;animation:fadeUp .4s ease both}
+.form-header{text-align:center;margin-bottom:28px}
+.form-header h2{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.form-header p{color:var(--muted);font-size:13px;margin-top:5px}
+.bill-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;box-shadow:var(--shadow)}
+.bill-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:2px dashed var(--border);margin-bottom:24px}
+.bill-no span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px}
+.bill-no strong{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent)}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.form-grid{display:grid;gap:16px;margin-bottom:22px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:500}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:14px;transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,168,56,.1)}
+.field input::placeholder{color:rgba(152,149,168,.4)}
+.field select option{background:var(--surface2)}
+.field input[readonly]{opacity:.65;cursor:default}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;gap:8px;margin-bottom:24px;background:var(--bg);padding:5px;border-radius:14px;border:1px solid var(--border)}
+.mode-btn{flex:1;padding:11px 8px;border:none;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .25s;color:var(--muted);background:none;display:flex;align-items:center;justify-content:center;gap:7px;flex-direction:column}
+.mode-btn small{font-size:11px;opacity:.7;font-weight:400}
+.mode-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(232,168,56,.3)}
+.mode-btn:hover:not(.active){color:var(--text);background:var(--surface2)}
+
+/* SUBJECT-WISE ROWS */
+.book-item{display:grid;grid-template-columns:1.8fr 1.6fr 70px 110px auto;gap:10px;align-items:end;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:9px;transition:border-color .2s}
+.book-item:hover{border-color:rgba(232,168,56,.25)}
+.book-item .field label{font-size:9px}
+.rm-btn{background:rgba(224,92,142,.15);border:1px solid rgba(224,92,142,.3);color:#e05c8e;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;align-self:flex-end;flex-shrink:0}
+.rm-btn:hover{background:rgba(224,92,142,.3)}
+.add-book-btn{background:none;border:1px dashed rgba(232,168,56,.4);color:var(--accent);padding:10px;border-radius:10px;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;transition:all .2s}
+.add-book-btn:hover{background:rgba(232,168,56,.05);border-style:solid}
+
+/* FULL SET PANEL */
+.set-preview{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px}
+.set-ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.set-ph h4{font-size:13px;font-weight:600}
+.set-total-badge{background:linear-gradient(135deg,rgba(232,168,56,.12),rgba(201,107,63,.08));border:1px solid rgba(232,168,56,.3);color:var(--accent);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700}
+.set-book-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.set-book-row:last-child{border-bottom:none}
+.set-book-name{font-weight:500}
+.set-book-sub{color:var(--muted);font-size:11px;margin-top:2px}
+.set-book-price{color:var(--accent);font-weight:600;flex-shrink:0;margin-left:12px}
+.set-empty{text-align:center;color:var(--muted);padding:28px;font-size:13px}
+
+/* PAYMENT */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.pay-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s}
+.pay-box:hover{border-color:rgba(232,168,56,.25)}
+.pay-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.pay-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.pi-cash{background:rgba(62,207,142,.15)}.pi-online{background:rgba(124,106,240,.15)}
+.pay-hdr h4{font-size:13px;font-weight:600}.pay-hdr span{font-size:11px;color:var(--muted)}
+
+/* SUMMARY */
+.summary-box{background:linear-gradient(135deg,rgba(232,168,56,.08),rgba(201,107,63,.06));border:1px solid rgba(232,168,56,.2);border-radius:14px;padding:20px;margin-bottom:22px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px}
+.sum-row:not(:last-child){border-bottom:1px solid rgba(232,168,56,.1)}
+.sum-row span{color:var(--muted)}
+.sum-row.total{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--accent);border-top:2px solid rgba(232,168,56,.25)!important;padding-top:13px!important;margin-top:5px}
+.sum-row.total span{color:var(--text)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.btn{padding:11px 22px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(232,168,56,.3)}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 24px rgba(232,168,56,.4)}
+.btn-sm{padding:8px 15px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.btn-sm:disabled{opacity:.5;cursor:not-allowed}
+.bsa{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.bsg{background:none;border:1px solid var(--border);color:var(--muted)}
+.bsg:hover{border-color:var(--accent);color:var(--accent)}
+.bsd{background:rgba(224,92,142,.12);border:1px solid rgba(224,92,142,.3);color:#e05c8e}
+.bsd:hover{background:rgba(224,92,142,.22)}
+.bsgreen{background:linear-gradient(135deg,var(--green),#2ca86e);color:#fff}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:420px;width:90%;text-align:center;animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal .check{font-size:48px;margin-bottom:12px}
+.modal h3{font-family:'Playfair Display',serif;font-size:19px;margin-bottom:5px}
+.modal p{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 18px;font-size:13px;z-index:9999;transform:translateY(70px);opacity:0;transition:all .3s;max-width:320px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(62,207,142,.4);color:var(--green)}
+.toast.error{border-color:rgba(224,92,142,.4);color:#e05c8e}
+.toast.info{border-color:rgba(74,158,255,.4);color:var(--blue)}
+
+/* PRICE LIST PAGE */
+.pl-wrap{animation:fadeUp .4s ease both}
+.pl-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+.pl-top h2{font-family:'Playfair Display',serif;font-size:22px}
+.pl-top p{color:var(--muted);font-size:13px;margin-top:4px}
+.class-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.class-tab{padding:7px 15px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .2s}
+.class-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+.class-tab:hover:not(.active){color:var(--text);border-color:var(--accent)}
+.pl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.pl-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.pl-class-label{font-family:'Playfair Display',serif;font-size:17px;font-weight:600}
+.pl-total-box{background:linear-gradient(135deg,rgba(232,168,56,.1),rgba(201,107,63,.07));border:1px solid rgba(232,168,56,.25);border-radius:12px;padding:9px 16px;text-align:right}
+.pl-total-box span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px}
+.pl-total-box strong{font-family:'Playfair Display',serif;font-size:20px;color:var(--accent)}
+.pl-hdr{display:grid;grid-template-columns:1fr 1.8fr 1.2fr 100px 32px;gap:10px;padding:0 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.pl-hdr span{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.pl-row{display:grid;grid-template-columns:1fr 1.8fr 1.2fr 100px 32px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.pl-row:last-child{border-bottom:none}
+.pl-row input{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%;transition:border-color .2s}
+.pl-row input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(232,168,56,.1)}
+.pl-row input::placeholder{color:rgba(152,149,168,.35)}
+.add-subj-btn{background:none;border:1px dashed rgba(62,207,142,.4);color:var(--green);padding:9px;border-radius:9px;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;font-size:12px;transition:all .2s;margin-top:10px}
+.add-subj-btn:hover{background:rgba(62,207,142,.05)}
+.pl-placeholder{text-align:center;color:var(--muted);padding:28px;font-size:13px}
+.info-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--blue);margin-bottom:18px}
+
+/* Responsive */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .charts-row{grid-template-columns:1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .pay-grid{grid-template-columns:1fr}
+  .book-item{grid-template-columns:1fr 1fr}
+  .pl-hdr,.pl-row{grid-template-columns:1fr 1fr}
+  header{padding:12px 16px}
+  .page{padding:18px 14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <div>
+      <h1>BookStore Pro</h1>
+      <span>Sales & Billing</span>
+    </div>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+    <button onclick="showPage('billing',this)">🧾 New Bill</button>
+    <button onclick="showPage('pricelist',this)">💰 Price List</button>
+    <button onclick="showPage('records',this)">📋 Records</button>
+  </nav>
+  <div class="hdr-right">
+    <div class="date-badge" id="dateBadge"></div>
+    <div class="sheet-status" title="Google Sheets connection">
+      <div class="dot connecting" id="connDot"></div>
+      <span id="connLabel">Connecting…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════ DASHBOARD ══════ -->
+<div class="page active" id="dashboard">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value" id="sRevenue">—</div><div class="stat-sub" id="sRevSub">Loading…</div></div>
+    <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-label">Total Bills</div><div class="stat-value" id="sBills">—</div><div class="stat-sub" id="sBillSub" style="color:var(--purple)">—</div></div>
+    <div class="stat-card"><div class="stat-icon">💵</div><div class="stat-label">Cash Collected</div><div class="stat-value" id="sCash">—</div><div class="stat-sub" id="sCashSub" style="color:var(--green)">—</div></div>
+    <div class="stat-card"><div class="stat-icon">📱</div><div class="stat-label">Online Collected</div><div class="stat-value" id="sOnline">—</div><div class="stat-sub" id="sOnlineSub" style="color:var(--pink)">—</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Daily Revenue Trend</div><div class="card-badge" id="chartBadge">—</div></div>
+      <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Sales by Subject</div><div class="card-badge">Books</div></div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+    </div>
+  </div>
+  <div class="charts-row" style="margin-bottom:0">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Weekly Revenue (Last 7 Days)</div><div class="card-badge">₹ INR</div></div>
+      <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Payment Mode Split</div><div class="card-badge">All Time</div></div>
+      <div class="chart-wrap"><canvas id="payChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ BILLING ══════ -->
+<div class="page" id="billing">
+  <div class="form-container">
+    <div class="form-header">
+      <h2>📚 Book Billing Form</h2>
+      <p>Choose a billing mode, fill in details, and save directly to Google Sheets</p>
+    </div>
+    <div class="bill-card">
+      <div class="bill-top">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div class="logo-icon" style="width:44px;height:44px;border-radius:13px;font-size:20px">📚</div>
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700">BookStore Pro</div>
+            <div style="font-size:11px;color:var(--muted)">Sales & Billing System</div>
+          </div>
+        </div>
+        <div class="bill-no"><span>Bill Number</span><strong id="billNumber">Auto-assigned</strong></div>
+      </div>
+
+      <!-- Student info -->
+      <div class="sec-title">📋 Student Information</div>
+      <div class="form-grid g3" style="margin-bottom:24px">
+        <div class="field"><label>📅 Date</label><input type="date" id="billDate"/></div>
+        <div class="field"><label>🎓 Student Name</label><input type="text" id="studentName" placeholder="Enter full name"/></div>
+        <div class="field"><label>🏫 Class / Grade</label>
+          <select id="studentClass" onchange="onClassChange()">
+            <option value="">— Select Class —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="sec-title">🔀 Billing Mode</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeSubjectBtn" onclick="setBillingMode('subject')">
+          📖 Subject-wise
+          <small>Pick individual subjects</small>
+        </button>
+        <button class="mode-btn" id="modeSetBtn" onclick="setBillingMode('set')">
+          📦 Full Book Set
+          <small>All books for selected class</small>
+        </button>
+      </div>
+
+      <!-- Subject-wise panel -->
+      <div id="subjectPanel">
+        <div class="sec-title">📖 Book Details</div>
+        <div id="bookItems"></div>
+        <button class="add-book-btn" onclick="addBookRow()">＋ Add Another Book</button>
+        <div style="height:20px"></div>
+      </div>
+
+      <!-- Full Set panel -->
+      <div id="setPanel" style="display:none">
+        <div class="sec-title">📦 Book Set Preview</div>
+        <div class="info-pill">ℹ️ Books are loaded from your Price List in Google Sheets. Select a class to auto-load.</div>
+        <div class="set-preview">
+          <div class="set-ph">
+            <h4 id="setTitle">Select a class above to preview</h4>
+            <div class="set-total-badge" id="setTotalBadge">₹ 0</div>
+          </div>
+          <div id="setBooksList"><div class="set-empty">⬆️ Select a class to load its book set</div></div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="sec-title">💵 Amount Summary</div>
+      <div class="summary-box">
+        <div class="sum-row"><span>Subtotal</span><strong id="subtotalVal">₹ 0.00</strong></div>
+        <div class="sum-row"><span>Discount</span><strong id="discountVal" style="color:#e05c8e">− ₹ 0.00</strong></div>
+        <div class="sum-row total"><span>Net Payable</span><strong id="netVal">₹ 0.00</strong></div>
+      </div>
+      <div class="form-grid g2" style="margin-bottom:22px">
+        <div class="field"><label>🏷️ Discount (₹)</label><input type="number" id="discountAmt" placeholder="0" min="0" oninput="recalc()"/></div>
+        <div class="field"><label>📝 Remarks</label><input type="text" id="remarks" placeholder="Optional note…"/></div>
+      </div>
+
+      <!-- Payment -->
+      <div class="sec-title">💳 Payment Details</div>
+      <div class="pay-grid">
+        <div class="pay-box">
+          <div class="pay-hdr"><div class="pay-icon pi-cash">💵</div><div><h4>Cash Payment</h4><span>Physical currency</span></div></div>
+          <div class="field"><label>Amount Paid in Cash (₹)</label><input type="number" id="cashAmt" placeholder="0.00" min="0" oninput="recalcPayment()"/></div>
+        </div>
+        <div class="pay-box">
+          <div class="pay-hdr"><div class="pay-icon pi-online">📱</div><div><h4>Online Payment</h4><span>UPI / Card / Net Banking</span></div></div>
+          <div class="field"><label>Amount Paid Online (₹)</label><input type="number" id="onlineAmt" placeholder="0.00" min="0" oninput="recalcPayment()"/></div>
+        </div>
+      </div>
+      <div id="payStatus" style="margin-bottom:20px;display:none">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:13px;display:flex;justify-content:space-between;align-items:center;font-size:14px">
+          <span style="color:var(--muted)">Balance Due</span>
+          <strong id="balanceDue">₹ 0.00</strong>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveBill()">💾 Save to Google Sheets</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PRICE LIST ══════ -->
+<div class="page" id="pricelist">
+  <div class="pl-wrap">
+    <div class="pl-top">
+      <div>
+        <h2>💰 Class-wise Price List</h2>
+        <p>Manage book prices per class — saved to Google Sheets, auto-fills billing form</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm bsg" onclick="loadPriceList()"><span class="spinner" id="plLoadSpinner" style="display:none"></span>🔄 Reload</button>
+        <button class="btn-sm bsg" onclick="addNewClass()">＋ New Class</button>
+        <button class="btn-sm bsa" id="plSaveBtn" onclick="saveCurrentClassToSheet()">💾 Save to Sheets</button>
+      </div>
+    </div>
+
+    <div class="class-tabs" id="classTabs">
+      <span style="color:var(--muted);font-size:13px"><span class="spinner"></span>Loading from Google Sheets…</span>
+    </div>
+
+    <div class="pl-card" id="plCard">
+      <div class="pl-card-top">
+        <div class="pl-class-label" id="plClassLabel">Loading price list…</div>
+        <div class="pl-total-box"><span>Set Total</span><strong id="plTotalDisplay">₹ 0</strong></div>
+      </div>
+      <div class="pl-hdr">
+        <span>Subject</span><span>Book Name</span><span>Publisher</span><span>Price (₹)</span><span></span>
+      </div>
+      <div id="plRows"><div class="pl-placeholder"><span class="spinner"></span> Loading…</div></div>
+      <button class="add-subj-btn" id="addSubjBtn" style="display:none" onclick="addSubjectRow()">＋ Add Subject / Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ RECORDS ══════ -->
+<div class="page" id="records">
+  <div class="card table-wrap">
+    <div class="card-header">
+      <div class="card-title">All Bills — Google Sheets Records</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm bsg" onclick="loadRecords()">🔄 Refresh</button>
+        <button class="btn-sm bsa" onclick="showPage('billing',document.querySelectorAll('nav button')[1])">＋ New Bill</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Bill #</th><th>Date</th><th>Student</th><th>Class</th><th>Mode</th>
+        <th>Books</th><th>Subtotal</th><th>Discount</th><th>Net</th>
+        <th>Cash</th><th>Online</th><th>Balance</th>
+      </tr></thead>
+      <tbody id="recordsBody">
+        <tr class="loading-row"><td colspan="12"><span class="spinner"></span>Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="check">✅</div>
+    <h3>Bill Saved!</h3>
+    <p id="modalMsg">Saved to Google Sheets.</p>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-outline" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="closeModal();showPage('records',document.querySelectorAll('nav button')[3])">View Records</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG — your deployed Apps Script URL
+// ════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz2YbtIYTePqUUnPMAJnwKDjOjUl3AVS_ComBt9XolCOSXLaVJfv-v-Vt-7wMp9ku--xQ/exec';
+
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let priceList     = {};   // { "Class 1": [{subject,bookName,publisher,price},...] }
+let activePLClass = null;
+let billingMode   = 'subject';
+let bookRowCount  = 0;
+let charts        = {};
+
+const DEFAULT_CLASSES = [
+  'Class 1','Class 2','Class 3','Class 4','Class 5',
+  'Class 6','Class 7','Class 8','Class 9','Class 10',
+  'Class 11 (Science)','Class 11 (Commerce)','Class 11 (Arts)',
+  'Class 12 (Science)','Class 12 (Commerce)','Class 12 (Arts)'
+];
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+document.getElementById('dateBadge').textContent =
+  new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('billDate').valueAsDate = new Date();
+
+// Boot: connect + load price list + load stats
+(async () => {
+  setStatus(null,'Connecting…');
+  try {
+    await Promise.all([ fetchStats(), loadPriceList() ]);
+    setStatus(true,'Connected');
+    showToast('✅ Google Sheets connected!','success');
+  } catch(err) {
+    setStatus(false,'Failed');
+    showToast('❌ Could not connect to Google Sheets','error');
+    // Fall back: seed empty classes so UI is usable
+    DEFAULT_CLASSES.forEach(c => { if(!priceList[c]) priceList[c]=[]; });
+    renderClassTabs();
+    populateClassDropdown();
+  }
+  addBookRow();
+})();
+
+// ════════════════════════════════════════════════════
+//  API HELPER
+// ════════════════════════════════════════════════════
+async function api(action, payload={}) {
+  const isGet = ['getBills','getStats','getPriceList'].includes(action);
+  const url   = isGet ? `${SCRIPT_URL}?action=${action}` : SCRIPT_URL;
+  const opts  = isGet
+    ? { method:'GET' }
+    : { method:'POST', body: JSON.stringify({ action, ...payload }) };
+  const res  = await fetch(url, opts);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+// ════════════════════════════════════════════════════
+//  CONNECTION STATUS
+// ════════════════════════════════════════════════════
+function setStatus(ok, label) {
+  const dot = document.getElementById('connDot');
+  const lbl = document.getElementById('connLabel');
+  dot.className = 'dot' + (ok===true?' connected': ok===false?' error':' connecting');
+  lbl.textContent = label || (ok ? 'Connected' : 'Not connected');
+}
+
+// ════════════════════════════════════════════════════
+//  PAGE NAVIGATION
+// ════════════════════════════════════════════════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id==='records')   loadRecords();
+  if (id==='dashboard') fetchStats().catch(()=>{});
+  if (id==='pricelist') { renderClassTabs(); if(activePLClass) renderPLEditor(); }
+}
+
+// ════════════════════════════════════════════════════
+//  PRICE LIST — fetch & save via Google Sheets
+// ════════════════════════════════════════════════════
+async function loadPriceList() {
+  document.getElementById('plLoadSpinner').style.display='inline-block';
+  try {
+    const data = await api('getPriceList');
+    priceList  = data.priceList || {};
+    // Ensure default classes exist
+    DEFAULT_CLASSES.forEach(c => { if (!priceList[c]) priceList[c]=[]; });
+    renderClassTabs();
+    populateClassDropdown();
+    if (!activePLClass && Object.keys(priceList).length) {
+      activePLClass = Object.keys(priceList)[0];
+    }
+    if (activePLClass) renderPLEditor();
+  } finally {
+    document.getElementById('plLoadSpinner').style.display='none';
+  }
+}
+
+async function saveCurrentClassToSheet() {
+  if (!activePLClass) { showToast('Select a class first','error'); return; }
+  const btn = document.getElementById('plSaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Saving…';
+  try {
+    // Save only the active class (other classes unchanged on server)
+    await api('savePriceList', {
+      priceList: { [activePLClass]: priceList[activePLClass] }
+    });
+    showToast(`✅ ${activePLClass} saved to Google Sheets!`, 'success');
+    populateClassDropdown(); // refresh billing class dropdown too
+  } catch(e) {
+    showToast('❌ Save failed: '+e.message,'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Save to Sheets';
+  }
+}
+
+function populateClassDropdown() {
+  const sel  = document.getElementById('studentClass');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select Class —</option>';
+  Object.keys(priceList).forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls; opt.textContent = cls;
+    if (cls === prev) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Price List UI ──────────────────────────────────
+function renderClassTabs() {
+  const ct   = document.getElementById('classTabs');
+  const keys = Object.keys(priceList);
+  if (!keys.length) {
+    ct.innerHTML = '<span style="color:var(--muted);font-size:13px">No classes yet. Click "+ New Class".</span>';
+    return;
+  }
+  ct.innerHTML = '';
+  keys.forEach(cls => {
+    const btn = document.createElement('button');
+    btn.className = 'class-tab' + (activePLClass === cls ? ' active' : '');
+    btn.textContent = cls;
+    btn.addEventListener('click', () => selectPLClass(cls));
+    ct.appendChild(btn);
+  });
+}
+
+function selectPLClass(cls) {
+  activePLClass = cls;
+  renderClassTabs();
+  renderPLEditor();
+}
+
+function renderPLEditor() {
+  if (!activePLClass) return;
+  document.getElementById('plClassLabel').textContent = activePLClass;
+  document.getElementById('addSubjBtn').style.display = 'block';
+  calcPLTotal();
+  const rows      = priceList[activePLClass] || [];
+  const container = document.getElementById('plRows');
+
+  if (!rows.length) {
+    container.innerHTML = '<div class="pl-placeholder">No books yet for this class. Click "＋ Add Subject / Book" below.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  rows.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'pl-row';
+    div.id = 'plr-' + i;
+
+    // Subject
+    const inpSubj = document.createElement('input');
+    inpSubj.type = 'text'; inpSubj.value = r.subject || '';
+    inpSubj.placeholder = 'e.g. Mathematics';
+    inpSubj.addEventListener('input', e => setPLField(i, 'subject', e.target.value));
+
+    // Book Name
+    const inpBook = document.createElement('input');
+    inpBook.type = 'text'; inpBook.value = r.bookName || '';
+    inpBook.placeholder = 'e.g. NCERT Maths Pt1';
+    inpBook.addEventListener('input', e => setPLField(i, 'bookName', e.target.value));
+
+    // Publisher
+    const inpPub = document.createElement('input');
+    inpPub.type = 'text'; inpPub.value = r.publisher || '';
+    inpPub.placeholder = 'e.g. NCERT';
+    inpPub.addEventListener('input', e => setPLField(i, 'publisher', e.target.value));
+
+    // Price
+    const inpPrice = document.createElement('input');
+    inpPrice.type = 'number'; inpPrice.value = r.price || '';
+    inpPrice.placeholder = '0'; inpPrice.min = '0';
+    inpPrice.addEventListener('input', e => { setPLField(i, 'price', e.target.value); calcPLTotal(); });
+
+    // Delete button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-sm bsd'; delBtn.title = 'Remove'; delBtn.textContent = '✕';
+    delBtn.addEventListener('click', () => delPLRow(i));
+
+    div.appendChild(inpSubj);
+    div.appendChild(inpBook);
+    div.appendChild(inpPub);
+    div.appendChild(inpPrice);
+    div.appendChild(delBtn);
+    container.appendChild(div);
+  });
+}
+
+function esc(s){ return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function setPLField(idx, field, val) {
+  if (!activePLClass) return;
+  if (!priceList[activePLClass][idx]) priceList[activePLClass][idx]={};
+  priceList[activePLClass][idx][field] = field==='price' ? (parseFloat(val)||0) : val;
+}
+
+function calcPLTotal() {
+  if (!activePLClass) return;
+  const total = (priceList[activePLClass]||[]).reduce((s,r)=>s+(parseFloat(r.price)||0),0);
+  document.getElementById('plTotalDisplay').textContent = '₹ '+total.toLocaleString('en-IN');
+}
+
+function addSubjectRow() {
+  if (!activePLClass) { showToast('Select a class first','error'); return; }
+  priceList[activePLClass].push({subject:'',bookName:'',publisher:'',price:0});
+  renderPLEditor();
+  // scroll to last row
+  setTimeout(()=>{
+    const rows = document.querySelectorAll('.pl-row');
+    if(rows.length) rows[rows.length-1].querySelector('input').focus();
+  },50);
+}
+
+function delPLRow(idx) {
+  if (!activePLClass) return;
+  priceList[activePLClass].splice(idx,1);
+  renderPLEditor();
+}
+
+function addNewClass() {
+  const name = prompt('Enter class name (e.g. Class 11 Arts):');
+  if (!name||!name.trim()) return;
+  const key = name.trim();
+  if (priceList[key]) { showToast('Class already exists','error'); return; }
+  priceList[key] = [];
+  activePLClass  = key;
+  renderClassTabs();
+  renderPLEditor();
+  populateClassDropdown();
+}
+
+// ════════════════════════════════════════════════════
+//  BILLING MODE
+// ════════════════════════════════════════════════════
+function setBillingMode(mode) {
+  billingMode = mode;
+  document.getElementById('modeSubjectBtn').classList.toggle('active', mode==='subject');
+  document.getElementById('modeSetBtn').classList.toggle('active',     mode==='set');
+  document.getElementById('subjectPanel').style.display = mode==='subject' ? 'block' : 'none';
+  document.getElementById('setPanel').style.display     = mode==='set'     ? 'block' : 'none';
+  if (mode==='set') renderSetPreview();
+  recalc();
+}
+
+function onClassChange() {
+  if (billingMode==='subject') refreshSubjectDropdowns();
+  if (billingMode==='set')     renderSetPreview();
+  recalc();
+}
+
+function renderSetPreview() {
+  const cls   = document.getElementById('studentClass').value;
+  const books = cls ? (priceList[cls]||[]) : [];
+  document.getElementById('setTitle').textContent = cls ? `📦 ${cls} — Complete Book Set` : 'Select a class to preview';
+  if (!cls || !books.length) {
+    document.getElementById('setBooksList').innerHTML =
+      `<div class="set-empty">${cls ? '⚠️ No books in price list for '+cls+'. Go to 💰 Price List to add books.' : '⬆️ Select a class above'}</div>`;
+    document.getElementById('setTotalBadge').textContent = '₹ 0';
+    recalc(); return;
+  }
+  const total = books.reduce((s,b)=>s+(parseFloat(b.price)||0),0);
+  document.getElementById('setTotalBadge').textContent = '₹ '+total.toLocaleString('en-IN');
+  document.getElementById('setBooksList').innerHTML = books.map(b=>`
+    <div class="set-book-row">
+      <div>
+        <div class="set-book-name">${b.bookName||'—'}</div>
+        <div class="set-book-sub">${b.subject||''}${b.publisher?' · '+b.publisher:''}</div>
+      </div>
+      <div class="set-book-price">₹ ${(parseFloat(b.price)||0).toLocaleString('en-IN')}</div>
+    </div>`).join('');
+  recalc();
+}
+
+// ════════════════════════════════════════════════════
+//  SUBJECT-WISE BOOK ROWS
+// ════════════════════════════════════════════════════
+function addBookRow() {
+  bookRowCount++;
+  const id  = bookRowCount;
+  const cls = document.getElementById('studentClass')?.value||'';
+  const subs = cls && priceList[cls] ? priceList[cls] : [];
+  const opts = subs.length
+    ? subs.map(s=>`<option value="${esc(s.subject)}" data-price="${s.price||0}" data-book="${esc(s.bookName)}">${s.subject}${s.bookName?' — '+s.bookName:''}</option>`).join('')
+    : '';
+  const div = document.createElement('div');
+  div.className='book-item'; div.id=`book-${id}`;
+  div.innerHTML=`
+    <div class="field">
+      <label>Book Name</label>
+      <input type="text" id="bn-${id}" placeholder="Book name" oninput="recalc()"/>
+    </div>
+    <div class="field">
+      <label>Subject</label>
+      <select id="bs-${id}" onchange="onSubjectPick(${id})">
+        <option value="">— Select Subject —</option>
+        ${opts}
+        <option value="__manual__">✏️ Enter manually</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Qty</label>
+      <input type="number" id="bq-${id}" value="1" min="1" oninput="recalc()"/>
+    </div>
+    <div class="field">
+      <label>Price (₹)</label>
+      <input type="number" id="bp-${id}" placeholder="0" min="0" oninput="recalc()"/>
+    </div>
+    <button class="rm-btn" onclick="document.getElementById('book-${id}').remove();recalc()" title="Remove">✕</button>
+  `;
+  document.getElementById('bookItems').appendChild(div);
+  recalc();
+}
+
+function onSubjectPick(id) {
+  const sel = document.getElementById(`bs-${id}`);
+  if (!sel) return;
+  const opt = sel.options[sel.selectedIndex];
+  const price = opt.getAttribute('data-price');
+  const book  = opt.getAttribute('data-book');
+  if (sel.value && sel.value!=='__manual__') {
+    if (price) document.getElementById(`bp-${id}`).value = price;
+    if (book)  document.getElementById(`bn-${id}`).value = book;
+  }
+  recalc();
+}
+
+function refreshSubjectDropdowns() {
+  // Rebuild all existing book rows with fresh subject options when class changes
+  const cls  = document.getElementById('studentClass')?.value||'';
+  const subs = cls && priceList[cls] ? priceList[cls] : [];
+  const opts = subs.length
+    ? subs.map(s=>`<option value="${esc(s.subject)}" data-price="${s.price||0}" data-book="${esc(s.bookName)}">${s.subject}${s.bookName?' — '+s.bookName:''}</option>`).join('')
+    : '';
+  document.querySelectorAll('.book-item').forEach(row => {
+    const sel = row.querySelector('select');
+    if (!sel) return;
+    const prevVal = sel.value;
+    sel.innerHTML = `<option value="">— Select Subject —</option>${opts}<option value="__manual__">✏️ Enter manually</option>`;
+    if (prevVal) sel.value = prevVal;
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  RECALC
+// ════════════════════════════════════════════════════
+function recalc() {
+  let sub = 0;
+  if (billingMode==='subject') {
+    document.querySelectorAll('.book-item').forEach(row => {
+      const inputs = row.querySelectorAll('input[type=number]');
+      sub += (parseFloat(inputs[0]?.value)||0) * (parseFloat(inputs[1]?.value)||0);
+    });
+  } else {
+    const cls = document.getElementById('studentClass')?.value||'';
+    if (cls && priceList[cls]) sub = priceList[cls].reduce((s,b)=>s+(parseFloat(b.price)||0),0);
+  }
+  const disc = parseFloat(document.getElementById('discountAmt')?.value||0);
+  const net  = Math.max(0,sub-disc);
+  document.getElementById('subtotalVal').textContent = '₹ '+sub.toFixed(2);
+  document.getElementById('discountVal').textContent = '− ₹ '+disc.toFixed(2);
+  document.getElementById('netVal').textContent      = '₹ '+net.toFixed(2);
+  recalcPayment();
+}
+
+function recalcPayment() {
+  const net    = parseFloat(document.getElementById('netVal').textContent.replace('₹ ',''))||0;
+  const cash   = parseFloat(document.getElementById('cashAmt')?.value||0);
+  const online = parseFloat(document.getElementById('onlineAmt')?.value||0);
+  const bal    = net-cash-online;
+  const ps     = document.getElementById('payStatus');
+  if (cash>0||online>0) {
+    ps.style.display='block';
+    const bd = document.getElementById('balanceDue');
+    bd.textContent = bal>0 ? '₹ '+bal.toFixed(2) : '✓ Fully Paid';
+    bd.style.color  = bal>0 ? '#e05c8e' : 'var(--green)';
+  } else { ps.style.display='none'; }
+}
+
+// ════════════════════════════════════════════════════
+//  SAVE BILL
+// ════════════════════════════════════════════════════
+async function saveBill() {
+  const student = document.getElementById('studentName').value.trim();
+  const cls     = document.getElementById('studentClass').value;
+  if (!student) { showToast('⚠️ Enter student name','error'); return; }
+  if (!cls)     { showToast('⚠️ Select a class','error'); return; }
+
+  let books = [];
+  if (billingMode==='subject') {
+    document.querySelectorAll('.book-item').forEach(row => {
+      const name  = row.querySelector('input[type=text]')?.value||'';
+      const subj  = row.querySelector('select')?.value||'';
+      const inputs= row.querySelectorAll('input[type=number]');
+      const qty   = inputs[0]?.value||1;
+      const price = inputs[1]?.value||0;
+      if (name||parseFloat(price)>0) books.push({name,subject:subj,qty,price,mode:'subject'});
+    });
+  } else {
+    books = (priceList[cls]||[]).map(b=>({
+      name:b.bookName,subject:b.subject,publisher:b.publisher,qty:1,price:b.price,mode:'set'
+    }));
+  }
+
+  const subtotal   = parseFloat(document.getElementById('subtotalVal').textContent.replace('₹ ',''))||0;
+  const discount   = parseFloat(document.getElementById('discountAmt')?.value||0);
+  const netAmount  = parseFloat(document.getElementById('netVal').textContent.replace('₹ ',''))||0;
+  const cashPaid   = parseFloat(document.getElementById('cashAmt')?.value||0);
+  const onlinePaid = parseFloat(document.getElementById('onlineAmt')?.value||0);
+  const balanceDue = Math.max(0,netAmount-cashPaid-onlinePaid);
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Saving…';
+  try {
+    const res = await api('saveBill',{
+      date: document.getElementById('billDate').value,
+      studentName:student, studentClass:cls, billingMode, books,
+      subtotal, discount, netAmount, cashPaid, onlinePaid, balanceDue,
+      remarks: document.getElementById('remarks').value
+    });
+    document.getElementById('billNumber').textContent = res.billNo||'—';
+    document.getElementById('modalMsg').textContent   = `Bill ${res.billNo} saved to Google Sheets!`;
+    document.getElementById('successModal').classList.add('show');
+    fetchStats().catch(()=>{});
+  } catch(e) {
+    showToast('❌ '+e.message,'error');
+  } finally {
+    btn.disabled=false; btn.innerHTML='💾 Save to Google Sheets';
+  }
+}
+
+function resetForm() {
+  ['studentName','discountAmt','cashAmt','onlineAmt','remarks'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('studentClass').value='';
+  document.getElementById('bookItems').innerHTML='';
+  document.getElementById('payStatus').style.display='none';
+  document.getElementById('billNumber').textContent='Auto-assigned';
+  bookRowCount=0; billingMode='subject';
+  document.getElementById('modeSubjectBtn').classList.add('active');
+  document.getElementById('modeSetBtn').classList.remove('active');
+  document.getElementById('subjectPanel').style.display='block';
+  document.getElementById('setPanel').style.display='none';
+  addBookRow(); recalc();
+}
+
+function closeModal() {
+  document.getElementById('successModal').classList.remove('show');
+  resetForm();
+}
+
+// ════════════════════════════════════════════════════
+//  RECORDS
+// ════════════════════════════════════════════════════
+async function loadRecords() {
+  const tb = document.getElementById('recordsBody');
+  tb.innerHTML='<tr class="loading-row"><td colspan="12"><span class="spinner"></span>Loading from Google Sheets…</td></tr>';
+  try {
+    const { bills=[] } = await api('getBills');
+    if (!bills.length) { tb.innerHTML='<tr class="empty-row"><td colspan="12">No bills yet. Create your first bill!</td></tr>'; return; }
+    tb.innerHTML = bills.map(b=>{
+      const cash=parseFloat(b.cashPaid)||0, online=parseFloat(b.onlinePaid)||0;
+      const mode=cash>0&&online>0?'mixed':online>0?'online':'cash';
+      const bArr=Array.isArray(b.books)?b.books:[];
+      return `<tr>
+        <td style="color:var(--accent);font-weight:600">${b.billNo||'—'}</td>
+        <td style="color:var(--muted);font-size:12px">${b.date||'—'}</td>
+        <td>${b.studentName||'—'}</td>
+        <td><span style="background:rgba(124,106,240,.15);color:var(--purple);padding:3px 9px;border-radius:20px;font-size:11px">${b.studentClass||'—'}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${b.billingMode==='set'?'📦 Set':'📖 Subject'}</td>
+        <td>${bArr.length} book${bArr.length!==1?'s':''}</td>
+        <td>₹${(+b.subtotal||0).toLocaleString('en-IN')}</td>
+        <td style="color:#e05c8e">₹${(+b.discount||0).toLocaleString('en-IN')}</td>
+        <td style="font-weight:600">₹${(+b.netAmount||0).toLocaleString('en-IN')}</td>
+        <td style="color:var(--green)">₹${cash.toLocaleString('en-IN')}</td>
+        <td style="color:var(--purple)">₹${online.toLocaleString('en-IN')}</td>
+        <td style="color:${(+b.balanceDue||0)>0?'#e05c8e':'var(--green)'}">₹${(+b.balanceDue||0).toLocaleString('en-IN')}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tb.innerHTML=`<tr class="empty-row"><td colspan="12">❌ ${e.message}</td></tr>`;
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  DASHBOARD CHARTS
+// ════════════════════════════════════════════════════
+const CO = { responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{ labels:{ color:'#9895a8', font:{ family:'DM Sans', size:11 } } } } };
+
+async function fetchStats() {
+  const [s, b] = await Promise.all([ api('getStats'), api('getBills') ]);
+  const d = { ...s, bills: b.bills||[] };
+  renderStatCards(d);
+  renderCharts(d);
+}
+
+function renderStatCards(data) {
+  const bills=data.bills||[];
+  let rev=0,cash=0,online=0;
+  bills.forEach(b=>{ rev+=+b.netAmount||0; cash+=+b.cashPaid||0; online+=+b.onlinePaid||0; });
+  document.getElementById('sRevenue').textContent  = '₹'+rev.toLocaleString('en-IN');
+  document.getElementById('sRevSub').textContent   = `from ${bills.length} bill${bills.length!==1?'s':''}`;
+  document.getElementById('sBills').textContent    = bills.length;
+  document.getElementById('sBillSub').textContent  = `${bills.filter(b=>(+b.balanceDue||0)>0).length} pending balance`;
+  document.getElementById('sCash').textContent     = '₹'+cash.toLocaleString('en-IN');
+  document.getElementById('sCashSub').textContent  = `${Math.round(cash/(rev||1)*100)}% of total`;
+  document.getElementById('sOnline').textContent   = '₹'+online.toLocaleString('en-IN');
+  document.getElementById('sOnlineSub').textContent= `${Math.round(online/(rev||1)*100)}% of total`;
+}
+
+function renderCharts(data) {
+  const {dailySales={},categorySales={},weeklySales={},paymentModes={}}=data;
+  const COLORS=['#e8a838','#3ecf8e','#7c6af0','#e05c8e','#4a9eff','#fbbf24','#34d399'];
+  const mk=(id)=>document.getElementById(id).getContext('2d');
+
+  if(charts.sales) charts.sales.destroy();
+  const dl=Object.keys(dailySales).slice(-23),dv=dl.map(k=>dailySales[k]);
+  const g=mk('salesChart'); const gr=g.createLinearGradient(0,0,0,220);
+  gr.addColorStop(0,'rgba(232,168,56,.3)'); gr.addColorStop(1,'rgba(232,168,56,0)');
+  charts.sales=new Chart(g,{type:'line',data:{labels:dl.length?dl:['No data'],datasets:[{label:'Revenue (₹)',data:dv.length?dv:[0],borderColor:'#e8a838',backgroundColor:gr,borderWidth:2.5,pointBackgroundColor:'#e8a838',pointRadius:3,pointHoverRadius:6,fill:true,tension:0.4}]},options:{...CO,scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9895a8',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9895a8',callback:v=>'₹'+v.toLocaleString('en-IN')}}}}});
+  document.getElementById('chartBadge').textContent=new Date().toLocaleString('en-IN',{month:'long',year:'numeric'});
+
+  const ck=Object.keys(categorySales),cv=ck.map(k=>categorySales[k]);
+  if(charts.cat) charts.cat.destroy();
+  charts.cat=new Chart(mk('catChart'),{type:'doughnut',data:{labels:ck.length?ck:['No data'],datasets:[{data:cv.length?cv:[1],backgroundColor:COLORS,borderColor:'#1a1828',borderWidth:3,hoverOffset:8}]},options:{...CO,cutout:'65%'}});
+
+  const wl=Object.keys(weeklySales),wv=wl.map(k=>weeklySales[k]);
+  if(charts.week) charts.week.destroy();
+  charts.week=new Chart(mk('weekChart'),{type:'bar',data:{labels:wl.length?wl:['No data'],datasets:[{label:'Revenue (₹)',data:wv.length?wv:[0],backgroundColor:'rgba(232,168,56,.8)',borderRadius:6}]},options:{...CO,scales:{x:{grid:{display:false},ticks:{color:'#9895a8'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9895a8',callback:v=>'₹'+v.toLocaleString('en-IN')}}}}});
+
+  if(charts.pay) charts.pay.destroy();
+  charts.pay=new Chart(mk('payChart'),{type:'doughnut',data:{labels:['Cash','Online'],datasets:[{data:[paymentModes.cash||0,paymentModes.online||0],backgroundColor:['rgba(62,207,142,.8)','rgba(124,106,240,.8)'],borderColor:'#1a1828',borderWidth:3,hoverOffset:8}]},options:{...CO,cutout:'60%'}});
+}
+
+// ════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>
